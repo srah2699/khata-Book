@@ -1,4 +1,5 @@
 import express, {Application} from 'express';
+import routes from './routes/index';
 import dbConnection from './configs/db';
 const dotenv = require('dotenv').config();
 export const app: Application = express();
@@ -13,7 +14,7 @@ async function main() {
     res.send('working');
   })
 
-  //app.use('/api/v1')
+  app.use('/api/v1', [routes.khataBook, routes.users])
 }
 
 main();

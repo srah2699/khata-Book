@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import User from './user';
 
 const khataBookSchema  = new mongoose.Schema({
   billName: {
@@ -10,22 +11,32 @@ const khataBookSchema  = new mongoose.Schema({
     required: true
   },
   receivable: {
-    type: Boolean
+    type: Boolean,
+    required: true
   },
   isReceived: {
-    type: Boolean
+    type: Boolean,
+    default: false
   },  
   payable: {
-    type: Boolean
+    type: Boolean,
+    required: true
   },
   isPaid: {
-    type: Boolean
+    type: Boolean,
+    default: false
   },
   date: {
     type: Date, 
     default: new Date(Date.now())
   },
+  user: {
+		type: String,//mongoose.Schema.Types.ObjectId,
+		//ref: User,
+		required: true,
+	},
 })
 
-const khataBook = mongoose.model('khataBook', khataBookSchema);
-export default khataBook;
+const billingBook = mongoose.model('KhataBook', khataBookSchema);
+
+export default billingBook;

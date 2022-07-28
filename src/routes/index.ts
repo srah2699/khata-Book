@@ -1,5 +1,5 @@
 import users from './user';
-import * as khataBook from './katabook';
+import khataBook from './katabook';
 
 const routes = {
   users,

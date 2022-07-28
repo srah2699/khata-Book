@@ -3,8 +3,7 @@ import _ from 'lodash';
 
 const validateUserReqBody: RequestHandler= (req, res, next) => {
   const keys = [
-    'firstName',
-    'lastName',
+    'Name',
     'emailId',
     'password',
     'phone',
@@ -33,16 +32,15 @@ const validateUserReqBody: RequestHandler= (req, res, next) => {
   next();
 }
 
-const validateSkillReqBody: RequestHandler= (req, res, next) => {
+const validateBillReqBody: RequestHandler= (req, res, next) => {
   const skills = req.body.skills;
   const errors: string[] = [];
   skills.forEach((skill: any, index: number) => {
     const keys = [
-      'name',
-      'isExpert',
-      'proficiency',
-      'experience',
-      'level',
+      'billName',
+      'amount',
+      'receivable',
+      'payable',
     ];
     const unknownKeys = _.difference(_.keys(skill), keys);
 
@@ -61,7 +59,7 @@ const validateSkillReqBody: RequestHandler= (req, res, next) => {
 
 const validators = {
   validateUserReqBody,
-  validateSkillReqBody,
+  validateBillReqBody,
 }
 
 export default validators
