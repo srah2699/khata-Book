@@ -23,10 +23,10 @@ const signIn: RequestHandler = async (req, res, next) => {
 		return res.status(400).send('User not found');
 	}
 	const isPasswordCorrect = await user.isValidatePassword(password);
-
+	const secretKey: any = process.env.SECRET_KEY;
 	if (!isPasswordCorrect) return res.status(400).send('Password is Incorrect');
 	if(user.disable) return res.status(400).send('User disabled');
-	const jwtToken = jwt.sign({ emailId: req.body.emailId }, 'skills-API', {
+	const jwtToken = jwt.sign({ emailId: req.body.emailId }, secretKey, {
 		expiresIn: '1h',
 	});
 

@@ -1,12 +1,4 @@
-/* 
-The user can add the bills which are paid and received(cleared) ok
-The user can add the bills which are payable and receivable(uncleared) ok
-The user can get and edit the bills added ok
-The user can check all the bills for a specific user cleared/uncleared and that is payable/receivable ok
-The user can check the total amt payable/receivable for a given dated  */ //ok
-
 import billingBook from '../models/billing';
-import User from '../models/user';
 import {RequestHandler} from 'express';
 
 const addBills: RequestHandler = async (req: any, res) => {
@@ -69,13 +61,12 @@ const updateBill: RequestHandler= async (req: any, res) => {
 const getTotalAmountOfDate: RequestHandler= async (req: any, res) => {
   const givenDate = new Date(req.params.date).toISOString();
   let key:any = [];
-  req.query.status === 'payable' ? key = [{isPaid: false, payable:true}] : key = [{isReceived:false, receivable:true}];
+  req.query.status === 'payable' ? key = [{isPaid: false}, {payable:true}] : key = [{isReceived:false}, {receivable:true}];
   try {
     const amount = await billingBook.aggregate([
       {$match:{"$and":[...key, {user: req.user._id}]}} ,
       {$group: { _id: "$date" , totalAmount: {$sum: '$amount'} }}
     ])
-
     const total = amount.filter(value => value._id.toISOString().split('T')[0] === givenDate.split('T')[0])
     res.status(200).send(total);
   } catch (err) {

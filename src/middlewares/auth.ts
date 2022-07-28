@@ -22,7 +22,7 @@ const verifyUser: RequestHandler= async (req: any, res, next) => {
   if(!token) {
     return res.status(400).send('Not authorized, no token');
   }
-  
+
   try {
     const secretKey: any = process.env.SECRET_KEY;
     const decodedToken: any = jwt.verify(token, secretKey);

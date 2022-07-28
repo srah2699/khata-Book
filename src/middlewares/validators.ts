@@ -21,8 +21,6 @@ const validateUserReqBody: RequestHandler= (req, res, next) => {
   }
 
   if (
-		typeof req.body.firstName !== 'string' ||
-		typeof req.body.lastName !== 'string' ||
 		typeof req.body.emailId !== 'string' ||
 		typeof req.body.password !== 'string'
 	) {
@@ -33,22 +31,17 @@ const validateUserReqBody: RequestHandler= (req, res, next) => {
 }
 
 const validateBillReqBody: RequestHandler= (req, res, next) => {
-  const skills = req.body.skills;
+  const {bills} = req.body;
   const errors: string[] = [];
-  skills.forEach((skill: any, index: number) => {
+  bills.forEach((bill: any, index: number) => {
     const keys = [
       'billName',
       'amount',
       'receivable',
       'payable',
     ];
-    const unknownKeys = _.difference(_.keys(skill), keys);
 
-    if(unknownKeys.length){
-      errors.push(`unexpected properties ${index}: ${unknownKeys}`);
-    }
-
-    const missingKeys = _.difference(keys, _.keys(skill));
+    const missingKeys = _.difference(keys, _.keys(bill));
     if(missingKeys.length){
       errors.push(`Missing required properties ${index}: ${missingKeys}`);
     }

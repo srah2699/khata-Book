@@ -15,9 +15,4 @@ user.get('/logout', controllers.user.logout);
 user.put('/resetPassword',controllers.user.resetPassword);
 user.put('/accountstatus',controllers.user.accountStatus);
 
-// make this endpoint available for admin only
-user.get('/getusers', async (req, res) => {
-	res.send(await User.find());
-});
-
 export default user;
