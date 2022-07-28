@@ -28,11 +28,11 @@ const khataBookSchema  = new mongoose.Schema({
   },
   date: {
     type: Date, 
-    default: new Date(Date.now())
+    default: new Date(Date.now()).toISOString()
   },
   user: {
-		type: String,//mongoose.Schema.Types.ObjectId,
-		//ref: User,
+		type: mongoose.Schema.Types.ObjectId,
+		ref: User,
 		required: true,
 	},
 })

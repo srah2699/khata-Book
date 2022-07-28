@@ -2,10 +2,11 @@
 The user can add the bills which are paid and received(cleared) ok
 The user can add the bills which are payable and receivable(uncleared) ok
 The user can get and edit the bills added ok
-The user can check all the bills for a specific user cleared/cleared and that is payable/receivable ok
+The user can check all the bills for a specific user cleared/uncleared and that is payable/receivable ok
 The user can check the total amt payable/receivable for a given dated  */ //ok
 
 import billingBook from '../models/billing';
+import User from '../models/user';
 import {RequestHandler} from 'express';
 
 const addBills: RequestHandler = async (req: any, res) => {
@@ -14,8 +15,8 @@ const addBills: RequestHandler = async (req: any, res) => {
 
   bills.forEach((bill: any) => 
   {
-    // bill['user'] = req.user._id
-    if(bill['date']) bill['date'] = new Date(bill['date']).setHours(0,0,0,0);
+    bill['user'] = req.user._id
+    if(bill['date']) bill['date'] = new Date(bill['date']).toISOString();
     userBill.push(bill);
   });
   
@@ -29,10 +30,9 @@ const addBills: RequestHandler = async (req: any, res) => {
 }
 
 const getBills: RequestHandler= async (req: any, res) => {
-  // get bills of user get usr mail by decode jwt token req.user._id
   let bills;
   try {
-    bills = await billingBook.find({user: req.headers.user})
+    bills = await billingBook.find({user: req.user._id});
   } catch (err) {
     res.status(500).send(err)
     return
@@ -42,8 +42,12 @@ const getBills: RequestHandler= async (req: any, res) => {
 
 const getBillsOfBiller: RequestHandler= async (req: any, res) => {
   let bills;
+  let status: any = {};
+  req.query.status === 'payable'? status['payable']= true : status['receivable'] = true;
   try {
-    bills = await billingBook.find({billName: req.params.user})
+    bills = await billingBook.aggregate([
+      {$match: {"$and":[{billName: req.params.user}, status, {user: req.user._id}]}}
+    ])
   } catch (err) {
     res.status(500).send(err)
     return
@@ -63,13 +67,17 @@ const updateBill: RequestHandler= async (req: any, res) => {
 }
 
 const getTotalAmountOfDate: RequestHandler= async (req: any, res) => {
-  const givenDate = new Date(req.params.date).setHours(0,0,0,0);
+  const givenDate = new Date(req.params.date).toISOString();
+  let key:any = [];
+  req.query.status === 'payable' ? key = [{isPaid: false, payable:true}] : key = [{isReceived:false, receivable:true}];
   try {
     const amount = await billingBook.aggregate([
-      {$match :{ $date: givenDate}},
-      {$group: { _id: null , totalAmount: {$sum: '$amout'} }}
+      {$match:{"$and":[...key, {user: req.user._id}]}} ,
+      {$group: { _id: "$date" , totalAmount: {$sum: '$amount'} }}
     ])
-    res.status(200).send(amount);
+
+    const total = amount.filter(value => value._id.toISOString().split('T')[0] === givenDate.split('T')[0])
+    res.status(200).send(total);
   } catch (err) {
     res.status(500).send(err)
   }
@@ -79,6 +87,7 @@ const khataBook = {
   addBills,
   getBills,
   getBillsOfBiller,
-  updateBill
+  updateBill,
+  getTotalAmountOfDate
 }
 export default khataBook;
