@@ -86,7 +86,8 @@ const accountStatus: RequestHandler= async (req: any, res) => {
 		} catch (err) {
 			res.status(500).send(err)
 	}
-	res.status(200).send('account disabled');
+	const status = disable?'disabled':'enabled'; 
+	res.status(200).send(`account ${status}`);
 }
 
 const user = {

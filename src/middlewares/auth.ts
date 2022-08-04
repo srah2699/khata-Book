@@ -1,4 +1,4 @@
-import {RequestHandler} from 'express';
+import { RequestHandler } from 'express';
 import User from '../models/user';
 import jwt from 'jsonwebtoken';
 
@@ -26,11 +26,39 @@ const verifyUser: RequestHandler= async (req: any, res, next) => {
   try {
     const secretKey: any = process.env.SECRET_KEY;
     const decodedToken: any = jwt.verify(token, secretKey);
-    req.user=await User.findOne({emailId: decodedToken.emailId });
+    req.user = await User.findOne({emailId: decodedToken.emailId });
     next();
   } catch (err: any){
-    res.status(500).send({ message: err.message})
+    res.status(500).send({ message: err.message });
   }
 }
 
-export {checkUser, verifyUser}
+const verifyAdmin: RequestHandler = async (req: any, res, next) => {
+	let token = req.cookies.jwtToken;
+
+	if (!token && req.header('Authorization')) {
+		const bearerToken: string | any = req.header('Authorization');
+		token = bearerToken.replace('Bearer ', '');
+	}
+
+	if (!token) {
+		return res.status(400).send('Not authorized, no token');
+	}
+
+	try {
+		const secretKey: any = process.env.SECRET_KEY;
+		const decodedToken: any = jwt.verify(token, secretKey);
+		req.user = await User.findOne({ emailId: decodedToken.emailId });
+		req.user && decodedToken.emailId === 'arun@gmail.com'
+			? next()
+			: res
+					.status(400)
+					.send({
+						message: "Either user doesn't exist, isn't admin or it's disabled",
+					});
+	} catch (err: any) {
+		res.status(500).send({ message: err.message });
+	}
+};
+
+export { checkUser, verifyUser, verifyAdmin };

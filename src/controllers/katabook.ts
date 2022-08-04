@@ -1,5 +1,7 @@
 import billingBook from '../models/billing';
 import {RequestHandler} from 'express';
+import user from '../models/user';
+import mongoose from 'mongoose';
 
 const addBills: RequestHandler = async (req: any, res) => {
   const {bills} = req.body;
@@ -74,11 +76,124 @@ const getTotalAmountOfDate: RequestHandler= async (req: any, res) => {
   }
 }
 
+const totalAmountOfUsers: RequestHandler= async (req: any, res) => {
+  const date = new Date(req.params.date).toISOString();
+  let payData:any = [];
+  if(req.query.payValue === 'payable' && req.query.status === 'true') payData = [{isPaid: true}, {payable:true}]
+  if(req.query.payValue === 'payable' && req.query.status === 'false') payData = [{isPaid: false}, {payable:true}]
+  if(req.query.payValue === 'receivable' && req.query.status === 'true') payData = [{isReceived: true}, {receivable:true}]
+  if(req.query.payValue === 'receivable' && req.query.status === 'false') payData = [{isReceived: false}, {receivable:true}]
+ 
+  try{
+    const data = await billingBook.aggregate([
+      {
+        $match: { "$and" : [ ...payData ] }
+      } ,
+      {
+        $group: { _id: "$date" , totalAmount: { $sum: "$amount"}}
+      }
+    ])
+    const result = data.filter(value => value._id.toISOString().split('T')[0] === date.split('T')[0])
+    res.status(200).send(result);
+  } catch (err){
+    res.status(500).send(err);
+  }
+}
+
+const totalAmountOfUser: RequestHandler= async (req: any, res) => {
+  const date = new Date(req.query.date).toISOString();
+  let payData:any = [];
+  if(req.query.payValue === 'payable' && req.query.status === 'true') payData = [{isPaid: true}, {payable:true}]
+  if(req.query.payValue === 'payable' && req.query.status === 'false') payData = [{isPaid: false}, {payable:true}]
+  if(req.query.payValue === 'receivable' && req.query.status === 'true') payData = [{isReceived: true}, {receivable:true}]
+  if(req.query.payValue === 'receivable' && req.query.status === 'false') payData = [{isReceived: false}, {receivable:true}]
+  const userid = req.params.user;
+  
+  try{
+    const data: any = await user.aggregate([
+      {
+        $match: { $expr: { $eq: ['$_id' , { $toObjectId: userid }]}}
+      },
+      {
+        $lookup: 
+        {
+          from: "khatabooks",
+          let: { userI: "$_id"},
+          pipeline: [
+            {
+              $match: { "$and": [...payData]}
+            },
+            {
+              $match: 
+              { $expr : 
+                { "$and" : [ 
+                  //{ $eq: [ "$user" , { $toObjectId: userid } ] } ,
+                  { $eq: [ "$user",  "$$userI" ] },
+                  //...payData
+                ] }
+              } 
+          },
+          {
+            $group: { _id: "$date" , totalAmount: { $sum: "$amount"}}
+          },
+          ],
+          as: "userData"
+        }
+      }
+    ]);
+    const resultsByDates = data[0].userData;
+    const result = resultsByDates.filter(result => result._id.toISOString().split('T')[0] === date.split('T')[0])
+    res.status(200).send(result);
+
+  } catch (err) {
+    res.status(500).send(err)
+  }
+}
+
 const khataBook = {
   addBills,
   getBills,
   getBillsOfBiller,
   updateBill,
-  getTotalAmountOfDate
+  getTotalAmountOfDate,
+  totalAmountOfUsers,
+  totalAmountOfUser
 }
 export default khataBook;
+
+//var ObjectId = require('mongodb').ObjectId;
+  //const user = new mongoose.Types.ObjectId(req.body.user)
+  //console.log(user)
+  /* const data = await billingBook.aggregate([
+    {
+      $match: {"$and": [...payData]}
+    },
+    {
+      $lookup: 
+      {
+        from: "khatausers",
+        let: { userI: "$user"},
+        pipeline: [
+          {
+            $match: 
+            { $expr : 
+              { "$and" : [ 
+                { $eq: [ '$_id' , { $toObjectId: userid } ] } ,
+                { $eq: [ "$_id",  "$$userI" ] },
+                //...payData
+              ] }
+            } 
+         }
+        ],
+        as: "userData"
+      }
+    }, 
+    {
+      $group: { _id: "$date" , totalAmount: { $sum: "$amount"}}
+    } 
+  ])  */
+  /* const data = await billingBook.aggregate([
+    {
+      $match: { $expr : { $eq: [ '$user' , { $toObjectId: userid } ] } } 
+    }
+  ]) */
