@@ -102,12 +102,13 @@ const totalAmountOfUsers: RequestHandler= async (req: any, res) => {
 
 const totalAmountOfUser: RequestHandler= async (req: any, res) => {
   const date = new Date(req.query.date).toISOString();
+  const userid = req.params.user;
+
   let payData:any = [];
   if(req.query.payValue === 'payable' && req.query.status === 'true') payData = [{isPaid: true}, {payable:true}]
   if(req.query.payValue === 'payable' && req.query.status === 'false') payData = [{isPaid: false}, {payable:true}]
   if(req.query.payValue === 'receivable' && req.query.status === 'true') payData = [{isReceived: true}, {receivable:true}]
   if(req.query.payValue === 'receivable' && req.query.status === 'false') payData = [{isReceived: false}, {receivable:true}]
-  const userid = req.params.user;
   
   try{
     const data: any = await user.aggregate([
@@ -118,7 +119,7 @@ const totalAmountOfUser: RequestHandler= async (req: any, res) => {
         $lookup: 
         {
           from: "khatabooks",
-          let: { userI: "$_id"},
+          let: { userId: "$_id"},
           pipeline: [
             {
               $match: { "$and": [...payData]}
@@ -128,7 +129,7 @@ const totalAmountOfUser: RequestHandler= async (req: any, res) => {
               { $expr : 
                 { "$and" : [ 
                   //{ $eq: [ "$user" , { $toObjectId: userid } ] } ,
-                  { $eq: [ "$user",  "$$userI" ] },
+                  { $eq: [ "$user",  "$$userId" ] },
                   //...payData
                 ] }
               } 
@@ -150,6 +151,44 @@ const totalAmountOfUser: RequestHandler= async (req: any, res) => {
   }
 }
 
+const totalAmountOfParticularBiller: RequestHandler= async (req: any, res) => {
+  const userid = req.params.user;
+  const biller = req.query.biller;
+  const date = req.query.date || null;
+
+  let payData:any = [];
+  if(req.query.payValue === 'payable' && req.query.status === 'true') payData = [{isPaid: true}, {payable:true}]
+  if(req.query.payValue === 'payable' && req.query.status === 'false') payData = [{isPaid: false}, {payable:true}]
+  if(req.query.payValue === 'receivable' && req.query.status === 'true') payData = [{isReceived: true}, {receivable:true}]
+  if(req.query.payValue === 'receivable' && req.query.status === 'false') payData = [{isReceived: false}, {receivable:true}]
+
+  const data = await user.aggregate([
+    {
+      $match: { $expr: { $eq: ['$_id' , { $toObjectId: userid }]}}
+    },
+    {
+      $lookup: { 
+        from: "khatabooks",
+        let : { userId: "$_id" },
+        pipeline: [
+          {
+            $match: { "$and": [ {billName: biller}, ...payData]}
+          },
+          {
+            $match: { $expr: { $eq: ['$user' , '$$userId']}}
+          },
+        ],
+        as: "userBillerData"
+      }
+    }
+  ])
+  const resultsByDates = data[0].userBillerData;
+  if(date){
+    const result = resultsByDates.filter(result => result.date.toISOString().split('T')[0] === date.split('T')[0])
+    return res.status(200).send(result);
+  }
+  res.status(200).send(resultsByDates);
+}
 const khataBook = {
   addBills,
   getBills,
@@ -157,7 +196,8 @@ const khataBook = {
   updateBill,
   getTotalAmountOfDate,
   totalAmountOfUsers,
-  totalAmountOfUser
+  totalAmountOfUser,
+  totalAmountOfParticularBiller
 }
 export default khataBook;
 

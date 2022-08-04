@@ -10,11 +10,9 @@ route.put('/bills/:id', middlewares.verifyUser, controllers.khataBook.updateBill
 route.get('/bills/:user', middlewares.verifyUser,controllers.khataBook.getBillsOfBiller);
 route.get('/bills/total/:date', middlewares.verifyUser, controllers.khataBook.getTotalAmountOfDate);
 
+//Admin routes
 route.get('/totalamount/:date', middlewares.verifyAdmin, controllers.khataBook.totalAmountOfUsers);
 route.get('/totalamountofuser/:user', middlewares.verifyAdmin, controllers.khataBook.totalAmountOfUser);
-//new routes admin dashboard use lookups in query
-//get total amount payable/receivable of particular date of all users combined can add status isPaid/isReceived
-//get total amount payable/receivable of particular date of particular user can add status isPaid/isReceived
-//get total amount payable/receivable of particular date of particular user to/from another can add status isPaid/isReceived
+route.get('/totalamountofparticularuser/:user', middlewares.verifyAdmin, controllers.khataBook.totalAmountOfParticularBiller)
  
 export default route;
